@@ -4,7 +4,7 @@ description: A Helm chart for grpc-http-proxy
 name: grpc-http-proxy
 version: 0.1.0
 sources:
-- https://github.com/mercari/grpc-http-proxy
+- https://github.com/kintohub/grpc-http-proxy
 maintainers:
 - name: tomoyat1
   email: t@tomoyat1.com

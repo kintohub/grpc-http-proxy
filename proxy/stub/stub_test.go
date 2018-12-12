@@ -2,6 +2,7 @@ package stub
 
 import (
 	"context"
+	"github.com/kintohub/grpc-http-proxy/proxy/grpcreflection"
 	"reflect"
 	"testing"
 
@@ -10,10 +11,9 @@ import (
 	"google.golang.org/grpc/codes"
 	_ "google.golang.org/grpc/test/grpc_testing"
 
-	"github.com/mercari/grpc-http-proxy/errors"
-	"github.com/mercari/grpc-http-proxy/metadata"
-	"github.com/mercari/grpc-http-proxy/proxy/proxytest"
-	"github.com/mercari/grpc-http-proxy/proxy/reflection"
+	"github.com/kintohub/grpc-http-proxy/errors"
+	"github.com/kintohub/grpc-http-proxy/metadata"
+	"github.com/kintohub/grpc-http-proxy/proxy/proxytest"
 )
 
 func TestNewStub(t *testing.T) {
@@ -51,7 +51,7 @@ func TestStub_InvokeRPC(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			serviceDesc := reflection.ServiceDescriptorFromFileDescriptor(fileDesc, proxytest.TestService)
+			serviceDesc := grpcreflection.ServiceDescriptorFromFileDescriptor(fileDesc, proxytest.TestService)
 			if serviceDesc == nil {
 				t.Fatal("service descriptor is nil")
 			}
@@ -66,7 +66,7 @@ func TestStub_InvokeRPC(t *testing.T) {
 			stub := &stubImpl{
 				stub: &proxytest.FakeGrpcdynamicStub{},
 			}
-			invocation := &reflection.MethodInvocation{
+			invocation := &grpcreflection.MethodInvocation{
 				MethodDescriptor: methodDesc,
 				Message:          inputMsg,
 			}

@@ -9,10 +9,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	"github.com/mercari/grpc-http-proxy/config"
-	"github.com/mercari/grpc-http-proxy/http"
-	"github.com/mercari/grpc-http-proxy/log"
-	"github.com/mercari/grpc-http-proxy/source"
+	"github.com/kintohub/grpc-http-proxy/config"
+	"github.com/kintohub/grpc-http-proxy/http"
+	"github.com/kintohub/grpc-http-proxy/log"
+	"github.com/kintohub/grpc-http-proxy/source"
 )
 
 func main() {

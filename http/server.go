@@ -2,13 +2,12 @@ package http
 
 import (
 	"context"
+	"github.com/kintohub/grpc-http-proxy/metadata"
+	"go.uber.org/zap"
 	"net"
 	"net/http"
 	"net/url"
-
-	"go.uber.org/zap"
-
-	"github.com/mercari/grpc-http-proxy/metadata"
+	grpc_metadata "google.golang.org/grpc/metadata"
 )
 
 // Server is an grpc-http-proxy server
@@ -47,7 +46,7 @@ func (s *Server) Serve(ln net.Listener) error {
 	return nil
 }
 
-// Client is a dynamic gRPC client that performs reflection
+// Client is a dynamic gRPC client that performs grpcreflection
 type Client interface {
 	Connect(context.Context, *url.URL) error
 	CloseConn() error
@@ -56,7 +55,7 @@ type Client interface {
 		string,
 		[]byte,
 		*metadata.Metadata,
-	) ([]byte, error)
+	) ([]byte, grpc_metadata.MD, error)
 }
 
 // Discoverer performs service discover

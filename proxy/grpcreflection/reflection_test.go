@@ -1,4 +1,4 @@
-package reflection
+package grpcreflection
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"github.com/jhump/protoreflect/dynamic"
 	_ "google.golang.org/grpc/test/grpc_testing"
 
-	perrors "github.com/mercari/grpc-http-proxy/errors"
-	"github.com/mercari/grpc-http-proxy/proxy/proxytest"
+	perrors "github.com/kintohub/grpc-http-proxy/errors"
+	"github.com/kintohub/grpc-http-proxy/proxy/proxytest"
 )
 
 const messageName = "grpc.testing.Payload"

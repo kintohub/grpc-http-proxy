@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/mercari/grpc-http-proxy/errors"
+	"github.com/kintohub/grpc-http-proxy/errors"
 )
 
 type versions map[string][]*url.URL

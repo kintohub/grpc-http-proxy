@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mercari/grpc-http-proxy/log"
-	"github.com/mercari/grpc-http-proxy/metadata"
+	"github.com/kintohub/grpc-http-proxy/log"
+	"github.com/kintohub/grpc-http-proxy/metadata"
 )
 
 type fakeDiscoverer struct {

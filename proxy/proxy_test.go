@@ -6,10 +6,10 @@ import (
 
 	_ "google.golang.org/grpc/test/grpc_testing"
 
-	"github.com/mercari/grpc-http-proxy/metadata"
-	"github.com/mercari/grpc-http-proxy/proxy/proxytest"
-	"github.com/mercari/grpc-http-proxy/proxy/reflection"
-	pstub "github.com/mercari/grpc-http-proxy/proxy/stub"
+	"github.com/kintohub/grpc-http-proxy/metadata"
+	"github.com/kintohub/grpc-http-proxy/proxy/proxytest"
+	"github.com/kintohub/grpc-http-proxy/proxy/grpcreflection"
+	pstub "github.com/kintohub/grpc-http-proxy/proxy/stub"
 )
 
 func TestNewProxy(t *testing.T) {
@@ -32,8 +32,8 @@ func TestProxy_Call(t *testing.T) {
 
 		p.stub = pstub.NewStub(&proxytest.FakeGrpcdynamicStub{})
 		fd := proxytest.NewFileDescriptor(t, proxytest.File)
-		sd := reflection.ServiceDescriptorFromFileDescriptor(fd, proxytest.TestService)
-		p.reflector = reflection.NewReflector(&proxytest.FakeGrpcreflectClient{ServiceDescriptor: sd.ServiceDescriptor})
+		sd := grpcreflection.ServiceDescriptorFromFileDescriptor(fd, proxytest.TestService)
+		p.reflector = grpcreflection.NewReflector(&proxytest.FakeGrpcreflectClient{ServiceDescriptor: sd.ServiceDescriptor})
 
 		_, err := p.Call(ctx, proxytest.TestService, proxytest.EmptyCall, []byte("{}"), &md)
 		if err != nil {
@@ -47,7 +47,7 @@ func TestProxy_Call(t *testing.T) {
 		md := make(metadata.Metadata)
 
 		p.stub = pstub.NewStub(&proxytest.FakeGrpcdynamicStub{})
-		p.reflector = reflection.NewReflector(&proxytest.FakeGrpcreflectClient{})
+		p.reflector = grpcreflection.NewReflector(&proxytest.FakeGrpcreflectClient{})
 
 		_, err := p.Call(ctx, proxytest.NotFoundService, proxytest.EmptyCall, []byte("{}"), &md)
 		if err == nil {
@@ -62,8 +62,8 @@ func TestProxy_Call(t *testing.T) {
 
 		p.stub = pstub.NewStub(&proxytest.FakeGrpcdynamicStub{})
 		fd := proxytest.NewFileDescriptor(t, proxytest.File)
-		sd := reflection.ServiceDescriptorFromFileDescriptor(fd, proxytest.TestService)
-		p.reflector = reflection.NewReflector(&proxytest.FakeGrpcreflectClient{ServiceDescriptor: sd.ServiceDescriptor})
+		sd := grpcreflection.ServiceDescriptorFromFileDescriptor(fd, proxytest.TestService)
+		p.reflector = grpcreflection.NewReflector(&proxytest.FakeGrpcreflectClient{ServiceDescriptor: sd.ServiceDescriptor})
 
 		_, err := p.Call(ctx, proxytest.TestService, proxytest.UnaryCall, []byte("{}"), &md)
 		if err == nil {

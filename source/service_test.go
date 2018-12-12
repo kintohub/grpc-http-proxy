@@ -17,7 +17,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
-	"github.com/mercari/grpc-http-proxy/errors"
+	"github.com/kintohub/grpc-http-proxy/errors"
 )
 
 type fixture struct {

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/mercari/grpc-http-proxy/errors"
+	"github.com/kintohub/grpc-http-proxy/errors"
 )
 
 func TestNewRecords(t *testing.T) {

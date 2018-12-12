@@ -1,4 +1,4 @@
-package reflection
+package grpcreflection
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/pkg/errors"
 
-	perrors "github.com/mercari/grpc-http-proxy/errors"
+	perrors "github.com/kintohub/grpc-http-proxy/errors"
 )
 
 // MethodInvocation contains a method and a message used to invoke an RPC
@@ -26,12 +26,12 @@ type Reflector interface {
 // NewReflector creates a new Reflector from the reflection client
 func NewReflector(rc grpcreflectClient) Reflector {
 	return &reflectorImpl{
-		rc: newReflectionClient(rc),
+		reflectionClient: newReflectionClient(rc),
 	}
 }
 
 type reflectorImpl struct {
-	rc *reflectionClient
+	reflectionClient *reflectionClient
 }
 
 // CreateInvocation creates a MethodInvocation by performing reflection
@@ -40,7 +40,7 @@ func (r *reflectorImpl) CreateInvocation(ctx context.Context,
 	methodName string,
 	input []byte,
 ) (*MethodInvocation, error) {
-	serviceDesc, err := r.rc.resolveService(ctx, serviceName)
+	serviceDesc, err := r.reflectionClient.resolveService(ctx, serviceName)
 	if err != nil {
 		return nil, errors.Wrap(err, "service was not found upstream even though it should have been there")
 	}

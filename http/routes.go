@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/mercari/grpc-http-proxy/proxy"
+	"github.com/kintohub/grpc-http-proxy/proxy"
 )
 
 func (s *Server) registerHandlers() {
