@@ -14,6 +14,9 @@ type Env struct {
 
 	// Token is the access token
 	Token string `envconfig:"TOKEN"`
+
+	// Restrict the service watch to a specific namespace - leave it empty for watching all namespaces
+	Namespace string `envconfig:"NAMESPACE"`
 }
 
 func ReadFromEnv() (*Env, error) {

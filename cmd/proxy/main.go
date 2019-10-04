@@ -37,7 +37,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "[ERROR] Failed to create k8s client: %s\n", err)
 		os.Exit(1)
 	}
-	d := source.NewService(k8sClient, "", logger)
+	d := source.NewService(k8sClient, env.Namespace, logger)
 	stopCh := make(chan struct{})
 	d.Run(stopCh)
 	s := http.New(env.Token, d, logger)

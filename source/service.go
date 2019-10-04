@@ -2,6 +2,7 @@ package source
 
 import (
 	"fmt"
+	"golang.org/x/time/rate"
 	"net/url"
 	"reflect"
 	"strings"
@@ -47,10 +48,15 @@ func NewService(
 	infFactory := informers.NewSharedInformerFactoryWithOptions(client,
 		30*time.Second, opts...)
 
+	rateLimiter := workqueue.NewMaxOfRateLimiter(
+		workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 1000*time.Second),
+		&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(10), 100)},
+	)
+
 	k := &Service{
 		Records:   NewRecords(),
 		logger:    l,
-		queue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Services"),
+		queue:     workqueue.NewNamedRateLimitingQueue(rateLimiter, "Services"),
 		namespace: namespace,
 	}
 	serviceInformer := infFactory.Core().V1().Services()
@@ -63,6 +69,12 @@ func NewService(
 				k.logger.Error(fmt.Sprintf("event for invalid object; got %T want *core.Service", obj))
 				return
 			}
+			k.logger.Debug("Before queuing create func old:",
+				zap.String("namespace", svc.Namespace),
+				zap.String("name", svc.Name),
+				zap.String("grpc-service", svc.Annotations[serviceNameAnnotationKey]),
+				zap.String("grpc-service-version", svc.Annotations[serviceVersionAnnotationKey]),
+			)
 			k.queue.AddRateLimited(Event{
 				EventType: createEvent,
 				Svc:       svc,
@@ -75,6 +87,12 @@ func NewService(
 				k.logger.Error(fmt.Sprintf("event for invalid object; got %T want *core.Service", obj))
 				return
 			}
+			k.logger.Debug("Before queuing delete func old:",
+				zap.String("namespace", svc.Namespace),
+				zap.String("name", svc.Name),
+				zap.String("grpc-service", svc.Annotations[serviceNameAnnotationKey]),
+				zap.String("grpc-service-version", svc.Annotations[serviceVersionAnnotationKey]),
+			)
 			k.queue.AddRateLimited(Event{
 				EventType: deleteEvent,
 				Svc:       svc,
@@ -84,7 +102,7 @@ func NewService(
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			oldSvc, ok := oldObj.(*core.Service)
 			if !ok {
-				k.logger.Error(fmt.Sprintf("event for invalid object; got %T want *core.Service", newObj))
+				k.logger.Error(fmt.Sprintf("event for invalid object; got %T want *core.Service", oldObj))
 				return
 			}
 			newSvc, ok := newObj.(*core.Service)
@@ -92,6 +110,18 @@ func NewService(
 				k.logger.Error(fmt.Sprintf("event for invalid object; got %T want *core.Service", newObj))
 				return
 			}
+			k.logger.Debug("Before queuing update func old:",
+				zap.String("namespace", oldSvc.Namespace),
+				zap.String("name", oldSvc.Name),
+				zap.String("grpc-service", oldSvc.Annotations[serviceNameAnnotationKey]),
+				zap.String("grpc-service-version", oldSvc.Annotations[serviceVersionAnnotationKey]),
+			)
+			k.logger.Debug("Before queuing update func new:",
+				zap.String("namespace", newSvc.Namespace),
+				zap.String("name", newSvc.Name),
+				zap.String("grpc-service", newSvc.Annotations[serviceNameAnnotationKey]),
+				zap.String("grpc-service-version", newSvc.Annotations[serviceVersionAnnotationKey]),
+			)
 			k.queue.AddRateLimited(Event{
 				EventType: updateEvent,
 				Svc:       newSvc,
@@ -159,11 +189,18 @@ func (k *Service) eventHandler(evt Event) {
 	switch evt.EventType {
 	case createEvent:
 		if !metav1.HasAnnotation(evt.Svc.ObjectMeta, serviceNameAnnotationKey) {
-			k.logger.Debug("skipping service because of no annotation",
+			k.logger.Debug("From queue create event: skipping service because of no annotation",
 				zap.String("namespace", evt.Svc.Namespace),
 				zap.String("name", evt.Svc.Name),
 			)
 			return
+		} else {
+			k.logger.Debug("From queue create event: adding service",
+				zap.String("namespace", evt.Svc.Namespace),
+				zap.String("name", evt.Svc.Name),
+				zap.String("grpc-service", evt.Svc.Annotations[serviceNameAnnotationKey]),
+				zap.String("grpc-service-version", evt.Svc.Annotations[serviceVersionAnnotationKey]),
+			)
 		}
 		u, ok := k.constructURL(evt.Svc)
 		if !ok {
@@ -181,11 +218,18 @@ func (k *Service) eventHandler(evt Event) {
 		}
 	case deleteEvent:
 		if !metav1.HasAnnotation(evt.Svc.ObjectMeta, serviceNameAnnotationKey) {
-			k.logger.Debug("skipping service because of no annotation",
+			k.logger.Debug("From queue delete event: skipping service because of no annotation",
 				zap.String("namespace", evt.Svc.Namespace),
 				zap.String("name", evt.Svc.Name),
 			)
 			return
+		} else {
+			k.logger.Debug("From queue delete event: adding",
+				zap.String("namespace", evt.Svc.Namespace),
+				zap.String("name", evt.Svc.Name),
+				zap.String("grpc-service", evt.Svc.Annotations[serviceNameAnnotationKey]),
+				zap.String("grpc-service-version", evt.Svc.Annotations[serviceVersionAnnotationKey]),
+			)
 		}
 		u, ok := k.constructURL(evt.Svc)
 		if !ok {
@@ -202,11 +246,24 @@ func (k *Service) eventHandler(evt Event) {
 		// Skip service and return
 		if !metav1.HasAnnotation(evt.Svc.ObjectMeta, serviceNameAnnotationKey) &&
 			!metav1.HasAnnotation(evt.OldSvc.ObjectMeta, serviceNameAnnotationKey) {
-			k.logger.Debug("skipping service because of no annotation",
+			k.logger.Debug("From queue update event: skipping service because of no annotation",
 				zap.String("namespace", evt.Svc.Namespace),
 				zap.String("name", evt.Svc.Name),
 			)
 			return
+		} else {
+			k.logger.Debug("From queue update event old:",
+				zap.String("namespace", evt.OldSvc.Namespace),
+				zap.String("name", evt.OldSvc.Name),
+				zap.String("grpc-service", evt.OldSvc.Annotations[serviceNameAnnotationKey]),
+				zap.String("grpc-service-version", evt.OldSvc.Annotations[serviceVersionAnnotationKey]),
+			)
+			k.logger.Debug("From queue update event new:",
+				zap.String("namespace", evt.Svc.Namespace),
+				zap.String("name", evt.Svc.Name),
+				zap.String("grpc-service", evt.Svc.Annotations[serviceNameAnnotationKey]),
+				zap.String("grpc-service-version", evt.Svc.Annotations[serviceVersionAnnotationKey]),
+			)
 		}
 
 		// Service versions before and after update both have gRPC service annotations
